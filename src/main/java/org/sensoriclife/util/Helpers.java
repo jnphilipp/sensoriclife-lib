@@ -1,9 +1,13 @@
 package org.sensoriclife.util;
 
 import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.math.BigInteger;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -19,8 +23,8 @@ import org.apache.commons.io.IOUtils;
 
 /**
  *
- * @author jnphilipp
- * @version 0.4.3
+ * @author jnphilipp, paul
+ * @version 0.4.4
  */
 public class Helpers {
 	/**
@@ -165,5 +169,62 @@ public class Helpers {
 			hashtext = "0" + hashtext;
 
 		return hashtext;
+	}
+
+	/**
+	 * Converts the given object to a byte array.
+	 * @param obj object
+	 * @return byte array
+	 * @throws IOException 
+	 */
+	public static byte[] toByteArray(Object obj) throws IOException {
+		byte[] byt = null;
+		ByteArrayOutputStream bytout = null;
+		ObjectOutputStream objout = null;
+
+		try {
+			bytout = new ByteArrayOutputStream();
+			objout = new ObjectOutputStream(bytout);
+			objout.writeObject(obj);
+			objout.flush();
+			byt = bytout.toByteArray();
+		}
+		finally {
+			if ( objout != null )
+				objout.close();
+
+			if ( bytout != null )
+				bytout.close();
+		}
+
+		return byt;
+	}
+
+	/**
+	 * Converts the given byte array to an object.
+	 * @param byt byte array
+	 * @return Object
+	 * @throws IOException
+	 * @throws ClassNotFoundException 
+	 */
+	public static Object toObject(byte[] byt) throws IOException, ClassNotFoundException {
+		Object obj = null;
+		ByteArrayInputStream bytin = null;
+		ObjectInputStream objin = null;
+
+		try {
+			bytin = new ByteArrayInputStream(byt);
+			objin = new ObjectInputStream(bytin);
+			obj = objin.readObject();
+		}
+		finally {
+			if ( bytin != null )
+				bytin.close();
+
+			if ( objin != null )
+				objin.close();
+		}
+
+		return obj;
 	}
 }
