@@ -2,7 +2,6 @@ nbactions.xml
 target
 data/*
 config/*.properties
-src/main/resources/*.properties
 logs/*
 .settings/*
 .project
