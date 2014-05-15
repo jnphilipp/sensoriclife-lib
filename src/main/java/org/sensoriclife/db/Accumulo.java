@@ -26,14 +26,20 @@ import org.apache.accumulo.core.security.ColumnVisibility;
 /**
  *
  * @author jnphilipp
- * @version 0.0.3
+ * @version 0.1.0
  */
 public class Accumulo {
 	/**
-	 * instance
+	 * instance accumulo
 	 */
 	private static Accumulo accumolo;
+	/**
+	 * instance
+	 */
 	private Instance instance; 
+	/**
+	 * connector
+	 */
 	private Connector connector;
 
 	private Accumulo() {
@@ -41,6 +47,10 @@ public class Accumulo {
 		this.connector = null;
 	}
 
+	/**
+	 * Returns an instance of this class.
+	 * @return instance
+	 */
 	public static synchronized Accumulo getInstance() {
 		if ( accumolo == null )
 			accumolo = new Accumulo();
@@ -48,42 +58,100 @@ public class Accumulo {
 		return accumolo;
 	}
 
+	/**
+	 * Returns a Scanner for the given table.
+	 * @param table table
+	 * @return scanner
+	 * @throws TableNotFoundException
+	 */
 	public synchronized Scanner getScannder(String table) throws TableNotFoundException {
 		return this.getScannder(table, "public");
 	}
 
+	/**
+	 * Returns a Scanner for the given table.
+	 * @param table table
+	 * @param visibility column visibility
+	 * @return scanner
+	 * @throws TableNotFoundException
+	 */
 	public synchronized Scanner getScannder(String table, String visibility) throws TableNotFoundException {
 		Authorizations auths = new Authorizations(visibility);
 		return this.connector.createScanner(table, auths);
 	}
 
-	public void connect() throws AccumuloException, AccumuloSecurityException {
+	/**
+	 * Connects to Accumulo using the MockIsntance.
+	 * @throws AccumuloException
+	 * @throws AccumuloSecurityException
+	 */
+	public synchronized void connect() throws AccumuloException, AccumuloSecurityException {
 		this.instance = new MockInstance();
 		this.connector = this.instance.getConnector("",  new PasswordToken(""));
 	}
 
-	public void connect(String name, String zooServers, String user, String password) throws AccumuloException, AccumuloSecurityException {
+	/**
+	 * Connects to an Accumulo cluster.
+	 * @param name name
+	 * @param zooServers zoo servers
+	 * @param user user
+	 * @param password password
+	 * @throws AccumuloException
+	 * @throws AccumuloSecurityException
+	 */
+	public synchronized void connect(String name, String zooServers, String user, String password) throws AccumuloException, AccumuloSecurityException {
 		this.instance = new ZooKeeperInstance(name, zooServers);
 		this.connector = this.instance.getConnector(user, new PasswordToken(password));
 	}
 
-	public void disconnect() {
+	/**
+	 * Disconnects Accumulo.
+	 */
+	public synchronized void disconnect() {
 		this.instance = null;
 		this.connector = null;
 	}
 
+	/**
+	 * Creates the given table.
+	 * @param table table
+	 * @throws AccumuloException
+	 * @throws AccumuloSecurityException
+	 * @throws TableExistsException
+	 */
 	public void createTable(String table) throws AccumuloException, AccumuloSecurityException, TableExistsException {
 		this.connector.tableOperations().create(table);
 	}
 
+	/**
+	 * Creates the given table.
+	 * @param table table
+	 * @param limitVersion <code>false</code> to store all timestamp versions
+	 * @throws AccumuloException
+	 * @throws AccumuloSecurityException
+	 * @throws TableExistsException
+	 */
 	public void createTable(String table, boolean limitVersion) throws AccumuloException, AccumuloSecurityException, TableExistsException {
 		this.connector.tableOperations().create(table, limitVersion);
 	}
 
+	/**
+	 * Returns all elements of the given table.
+	 * @param table table
+	 * @return Iterator for all elements
+	 * @throws TableNotFoundException
+	 */
 	public synchronized Iterator<Entry<Key,Value>> scanAll(String table) throws TableNotFoundException {
 		return this.scanAll(table, "public");
 	}
 
+	/**
+	 * Returns all elements of the given table.
+	 * @param table table
+	 * @param visibility column visibility
+	 * @return Iterator for all elements
+	 * @throws TableNotFoundException
+	 */
 	public synchronized Iterator<Entry<Key,Value>> scanAll(String table, String visibility) throws TableNotFoundException {
 		Authorizations auths = new Authorizations(visibility);
 		Scanner scan = this.connector.createScanner(table, auths);
@@ -91,10 +159,25 @@ public class Accumulo {
 		return scan.iterator();
 	}
 
+	/**
+	 * Returns all elements filter by the given range for the row ids.
+	 * @param table table
+	 * @param range row id range
+	 * @return iterator
+	 * @throws TableNotFoundException
+	 */
 	public synchronized Iterator<Entry<Key,Value>> scanByKey(String table, Range range) throws TableNotFoundException {
 		return this.scanByKey(table, "public", range);
 	}
 
+	/**
+	 * Returns all elements filter by the given range for the row ids.
+	 * @param table table
+	 * @param visibility column visibility
+	 * @param range row id range
+	 * @return iterator
+	 * @throws TableNotFoundException
+	 */
 	public synchronized Iterator<Entry<Key,Value>> scanByKey(String table, String visibility, Range range) throws TableNotFoundException {
 		Authorizations auths = new Authorizations(visibility);
 
@@ -104,30 +187,150 @@ public class Accumulo {
 		return scan.iterator();
 	}
 
-	public synchronized void write(String table, byte[] rowId, byte[] columnFamily, byte[] columnQualifier, byte[] values) throws MutationsRejectedException, TableNotFoundException {
-		this.write(table, rowId, columnFamily, columnQualifier, "public", System.currentTimeMillis(), values);
+	/**
+	 * Writes the given data to the given table.
+	 * @param table table
+	 * @param rowId row id
+	 * @param columnFamily column family
+	 * @param columnQualifier column qualifier
+	 * @param value value
+	 * @throws MutationsRejectedException
+	 * @throws TableNotFoundException
+	 */
+	public synchronized void write(String table, byte[] rowId, byte[] columnFamily, byte[] columnQualifier, byte[] value) throws MutationsRejectedException, TableNotFoundException {
+		this.write(table, rowId, columnFamily, columnQualifier, "public", System.currentTimeMillis(), value);
 	}
 
-	public synchronized void write(String table, String rowId, String columnFamily, String columnQualifier, Value values) throws MutationsRejectedException, TableNotFoundException {
-		this.write(table, rowId, columnFamily, columnQualifier, "public", System.currentTimeMillis(), values);
+	/**
+	 * Writes the given data to the given table.
+	 * @param table table
+	 * @param rowId row id
+	 * @param columnFamily column family
+	 * @param columnQualifier column qualifier
+	 * @param value value
+	 * @throws MutationsRejectedException
+	 * @throws TableNotFoundException
+	 */
+	public synchronized void write(String table, String rowId, String columnFamily, String columnQualifier, String value) throws MutationsRejectedException, TableNotFoundException {
+		this.write(table, rowId, columnFamily, columnQualifier, "public", System.currentTimeMillis(), value);
 	}
 
-	public synchronized void write(String table, byte[] rowId, byte[] columnFamily, byte[] columnQualifier, byte[] values, String visibility) throws MutationsRejectedException, TableNotFoundException {
-		this.write(table, rowId, columnFamily, columnQualifier, visibility, System.currentTimeMillis(), values);
+	/**
+	 * Writes the given data to the given table.
+	 * @param table table
+	 * @param rowId row id
+	 * @param columnFamily column family
+	 * @param columnQualifier column qualifier
+	 * @param value value
+	 * @throws MutationsRejectedException
+	 * @throws TableNotFoundException
+	 */
+	public synchronized void write(String table, String rowId, String columnFamily, String columnQualifier, Value value) throws MutationsRejectedException, TableNotFoundException {
+		this.write(table, rowId, columnFamily, columnQualifier, "public", System.currentTimeMillis(), value);
 	}
 
-	public synchronized void write(String table, String rowId, String columnFamily, String columnQualifier, Value values, String visibility) throws MutationsRejectedException, TableNotFoundException {
-		this.write(table, rowId, columnFamily, columnQualifier, visibility, System.currentTimeMillis(), values);
+	/**
+	 * Writes the given data to the given table.
+	 * @param table table
+	 * @param rowId row id
+	 * @param columnFamily column family
+	 * @param columnQualifier column qualifier
+	 * @param visibility column visibility
+	 * @param value value
+	 * @throws MutationsRejectedException
+	 * @throws TableNotFoundException
+	 */
+	public synchronized void write(String table, byte[] rowId, byte[] columnFamily, byte[] columnQualifier, String visibility, byte[] value) throws MutationsRejectedException, TableNotFoundException {
+		this.write(table, rowId, columnFamily, columnQualifier, visibility, System.currentTimeMillis(), value);
 	}
 
-	public synchronized void write(String table, byte[] rowId, byte[] columnFamily, byte[] columnQualifier, long timestamp, byte[] values) throws MutationsRejectedException, TableNotFoundException {
-		this.write(table, rowId, columnFamily, columnQualifier, "public", timestamp, values);
+	/**
+	 * Writes the given data to the given table.
+	 * @param table table
+	 * @param rowId row id
+	 * @param columnFamily column family
+	 * @param columnQualifier column qualifier
+	 * @param visibility column visibility
+	 * @param value value
+	 * @throws MutationsRejectedException
+	 * @throws TableNotFoundException
+	 */
+	public synchronized void write(String table, String rowId, String columnFamily, String columnQualifier, String visibility, String value) throws MutationsRejectedException, TableNotFoundException {
+		this.write(table, rowId, columnFamily, columnQualifier, visibility, System.currentTimeMillis(), value);
 	}
 
-	public synchronized void write(String table, String rowId, String columnFamily, String columnQualifier, long timestamp, Value values) throws MutationsRejectedException, TableNotFoundException {
-		this.write(table, rowId, columnFamily, columnQualifier, "public", timestamp, values);
+	/**
+	 * Writes the given data to the given table.
+	 * @param table table
+	 * @param rowId row id
+	 * @param columnFamily column family
+	 * @param columnQualifier column qualifier
+	 * @param visibility column visibility
+	 * @param value value
+	 * @throws MutationsRejectedException
+	 * @throws TableNotFoundException
+	 */
+	public synchronized void write(String table, String rowId, String columnFamily, String columnQualifier, String visibility, Value value) throws MutationsRejectedException, TableNotFoundException {
+		this.write(table, rowId, columnFamily, columnQualifier, visibility, System.currentTimeMillis(), value);
 	}
 
+	/**
+	 * Writes the given data to the given table.
+	 * @param table table
+	 * @param rowId row id
+	 * @param columnFamily column family
+	 * @param columnQualifier column qualifier
+	 * @param timestamp timestamp
+	 * @param value value
+	 * @throws MutationsRejectedException
+	 * @throws TableNotFoundException
+	 */
+	public synchronized void write(String table, byte[] rowId, byte[] columnFamily, byte[] columnQualifier, long timestamp, byte[] value) throws MutationsRejectedException, TableNotFoundException {
+		this.write(table, rowId, columnFamily, columnQualifier, "public", timestamp, value);
+	}
+
+	/**
+	 * Writes the given data to the given table.
+	 * @param table table
+	 * @param rowId row id
+	 * @param columnFamily column family
+	 * @param columnQualifier column qualifier
+	 * @param timestamp timestamp
+	 * @param value value
+	 * @throws MutationsRejectedException
+	 * @throws TableNotFoundException
+	 */
+	public synchronized void write(String table, String rowId, String columnFamily, String columnQualifier, long timestamp, String value) throws MutationsRejectedException, TableNotFoundException {
+		this.write(table, rowId, columnFamily, columnQualifier, "public", timestamp, value);
+	}
+
+	/**
+	 * Writes the given data to the given table.
+	 * @param table table
+	 * @param rowId row id
+	 * @param columnFamily column family
+	 * @param columnQualifier column qualifier
+	 * @param timestamp timestamp
+	 * @param value value
+	 * @throws MutationsRejectedException
+	 * @throws TableNotFoundException
+	 */
+	public synchronized void write(String table, String rowId, String columnFamily, String columnQualifier, long timestamp, Value value) throws MutationsRejectedException, TableNotFoundException {
+		this.write(table, rowId, columnFamily, columnQualifier, "public", timestamp, value);
+	}
+
+	/**
+	 * Writes the given data to the given table.
+	 * @param table table
+	 * @param rowId row id
+	 * @param columnFamily column family
+	 * @param columnQualifier column qualifier
+	 * @param visibility column visibility
+	 * @param timestamp timestamp
+	 * @param value value
+	 * @throws MutationsRejectedException
+	 * @throws TableNotFoundException
+	 */
 	public synchronized void write(String table, byte[] rowId, byte[] columnFamily, byte[] columnQualifier, String visibility, long timestamp, byte[] value) throws MutationsRejectedException, TableNotFoundException {
 		ColumnVisibility colVis = new ColumnVisibility("public");
 
@@ -142,6 +345,34 @@ public class Accumulo {
 		writer.close();
 	}
 
+	/**
+	 * Writes the given data to the given table.
+	 * @param table table
+	 * @param rowId row id
+	 * @param columnFamily column family
+	 * @param columnQualifier column qualifier
+	 * @param visibility column visibility
+	 * @param timestamp timestamp
+	 * @param value value
+	 * @throws MutationsRejectedException
+	 * @throws TableNotFoundException
+	 */
+	public synchronized void write(String table, String rowId, String columnFamily, String columnQualifier, String visibility, long timestamp, String value) throws MutationsRejectedException, TableNotFoundException {
+		this.write(table, rowId, columnFamily, columnQualifier, visibility, timestamp, new Value(value.getBytes()));
+	}
+
+	/**
+	 * Writes the given data to the given table.
+	 * @param table table
+	 * @param rowId row id
+	 * @param columnFamily column family
+	 * @param columnQualifier column qualifier
+	 * @param visibility column visibility
+	 * @param timestamp timestamp
+	 * @param value value
+	 * @throws MutationsRejectedException
+	 * @throws TableNotFoundException
+	 */
 	public synchronized void write(String table, String rowId, String columnFamily, String columnQualifier, String visibility, long timestamp, Value value) throws MutationsRejectedException, TableNotFoundException {
 		ColumnVisibility colVis = new ColumnVisibility("public");
 
@@ -156,6 +387,13 @@ public class Accumulo {
 		writer.close();
 	}
 
+	/**
+	 * Writes the given data to the given table.
+	 * @param table table
+	 * @param rows rows to write
+	 * @throws MutationsRejectedException
+	 * @throws TableNotFoundException
+	 */
 	public synchronized void write(String table, List<Object[]> rows) throws MutationsRejectedException, TableNotFoundException {
 		BatchWriterConfig config = new BatchWriterConfig();
 		config.setMaxMemory(10000000L);
