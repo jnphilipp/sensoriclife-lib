@@ -22,6 +22,7 @@ import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.accumulo.core.security.ColumnVisibility;
+import org.apache.hadoop.io.Text;
 
 /**
  *
@@ -154,9 +155,44 @@ public class Accumulo {
 	 */
 	public synchronized Iterator<Entry<Key,Value>> scanAll(String table, String visibility) throws TableNotFoundException {
 		Authorizations auths = new Authorizations(visibility);
-		Scanner scan = this.connector.createScanner(table, auths);
+		Scanner scanner = this.connector.createScanner(table, auths);
 
-		return scan.iterator();
+		Iterator<Entry<Key,Value>> iterator = scanner.iterator();
+		scanner.close();
+
+		return iterator;
+	}
+
+	/**
+	 * Returns all elements filter by the given column family and column qualifier.
+	 * @param table table
+	 * @param columnFamily column family
+	 * @param columnQualifier column qualifier
+	 * @return iterator
+	 * @throws TableNotFoundException
+	 */
+	public synchronized Iterator<Entry<Key,Value>> scanColumns(String table, String columnFamily, String columnQualifier) throws TableNotFoundException {
+		return this.scanColumns(table, columnFamily, columnQualifier, "public");
+	}
+
+	/**
+	 * Returns all elements filter by the given column family and column qualifier.
+	 * @param table table
+	 * @param columnFamily column family
+	 * @param columnQualifier column qualifier
+	 * @param visibility column visibility
+	 * @return iterator
+	 * @throws TableNotFoundException
+	 */
+	public synchronized Iterator<Entry<Key,Value>> scanColumns(String table, String columnFamily, String columnQualifier, String visibility) throws TableNotFoundException {
+		Authorizations auths = new Authorizations(visibility);
+
+		Scanner scanner = this.connector.createScanner(table, auths);
+		scanner.fetchColumn(new Text(columnFamily), new Text(columnQualifier));
+		Iterator<Entry<Key,Value>> iterator = scanner.iterator();
+		scanner.close();
+
+		return iterator;
 	}
 
 	/**
