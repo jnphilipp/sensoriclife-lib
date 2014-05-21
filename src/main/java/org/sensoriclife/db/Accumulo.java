@@ -137,6 +137,17 @@ public class Accumulo {
 	}
 
 	/**
+	 * Deletes the given table.
+	 * @param table table name
+	 * @throws AccumuloException
+	 * @throws AccumuloSecurityException
+	 * @throws TableNotFoundException
+	 */
+	public void deleteTable(String table) throws AccumuloException, AccumuloSecurityException, TableNotFoundException {
+		this.connector.tableOperations().delete(table);
+	}
+
+	/**
 	 * Returns all elements of the given table.
 	 * @param table table
 	 * @return Iterator for all elements
