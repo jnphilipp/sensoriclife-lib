@@ -20,11 +20,12 @@ import java.util.Collection;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.ArrayUtils;
 
 /**
  *
  * @author jnphilipp, paul
- * @version 0.4.4
+ * @version 0.5.0
  */
 public class Helpers {
 	/**
@@ -226,5 +227,16 @@ public class Helpers {
 		}
 
 		return obj;
+	}
+
+	/**
+	 * Deep copy the given object through a byte array.
+	 * @param obj object to copy
+	 * @return copy of the given object
+	 * @throws IOException
+	 * @throws ClassNotFoundException 
+	 */
+	public static Object deepCopy(Object obj) throws IOException, ClassNotFoundException {
+		return toObject(ArrayUtils.clone(toByteArray(obj)));
 	}
 }
