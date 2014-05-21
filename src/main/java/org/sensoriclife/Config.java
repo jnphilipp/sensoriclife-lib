@@ -8,7 +8,7 @@ import java.util.Properties;
 /**
  *
  * @author jnphilipp
- * @version 0.0.1
+ * @version 0.0.2
  */
 public class Config {
 	/**
@@ -20,7 +20,7 @@ public class Config {
 	 */
 	private Properties properties;
 	/**
-	 * 
+	 * defaults
 	 */
 	private Map<String, String> defaults;
 
@@ -29,9 +29,8 @@ public class Config {
 			this.properties = new Properties();
 			this.properties.load(this.getClass().getResourceAsStream("/config.properties"));
 		}
-		catch ( IOException e ) {
+		catch ( IOException | NullPointerException e ) {
 			Logger.error("Error while loading config file.", e.toString());
-			System.exit(1);
 		}
 
 		this.defaults = new LinkedHashMap<>();
@@ -92,5 +91,14 @@ public class Config {
 	 */
 	public static int getIntegerProperty(String key) {
 		return Integer.parseInt(Config.getProperty(key));
+	}
+
+	/**
+	 * Returns the value of the given key as integer.
+	 * @param key key
+	 * @return integer value
+	 */
+	public static long getLongProperty(String key) {
+		return Long.parseLong(Config.getProperty(key));
 	}
 }

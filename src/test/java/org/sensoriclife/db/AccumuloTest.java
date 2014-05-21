@@ -13,9 +13,11 @@ import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.sensoriclife.Logger;
 import org.sensoriclife.util.Helpers;
 
 /**
@@ -26,6 +28,11 @@ import org.sensoriclife.util.Helpers;
 public class AccumuloTest {
 	@Rule
 	public TemporaryFolder tmpDirectory = new TemporaryFolder();
+
+	@BeforeClass
+	public static void setUp() {
+		Logger.getInstance();
+	}
 
 	@Test
 	@Deprecated
