@@ -27,12 +27,13 @@ import org.apache.accumulo.core.security.Authorizations;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.accumulo.minicluster.MiniAccumuloCluster;
 import org.apache.hadoop.io.Text;
+import org.sensoriclife.Config;
 import org.sensoriclife.Logger;
 
 /**
  *
  * @author jnphilipp
- * @version 0.2.0
+ * @version 0.2.1
  */
 public class Accumulo {
 	/**
@@ -61,6 +62,9 @@ public class Accumulo {
 		this.connector = null;
 		this.accumulo = null;
 		this.batchWriters = new LinkedHashMap<>();
+
+		if ( !Config.getInstance().getProperties().containsKey("accumulo.batch_writer.max_memory") )
+			Config.getInstance().getProperties().setProperty("accumulo.batch_writer.max_memory", "100000");
 	}
 
 	/**
@@ -197,7 +201,7 @@ public class Accumulo {
 	 * @throws AccumuloSecurityException
 	 * @throws TableExistsException
 	 */
-	public void createTable(String table) throws AccumuloException, AccumuloSecurityException, TableExistsException {
+	public synchronized void createTable(String table) throws AccumuloException, AccumuloSecurityException, TableExistsException {
 		this.connector.tableOperations().create(table);
 	}
 
@@ -209,7 +213,7 @@ public class Accumulo {
 	 * @throws AccumuloSecurityException
 	 * @throws TableExistsException
 	 */
-	public void createTable(String table, boolean limitVersion) throws AccumuloException, AccumuloSecurityException, TableExistsException {
+	public synchronized void createTable(String table, boolean limitVersion) throws AccumuloException, AccumuloSecurityException, TableExistsException {
 		this.connector.tableOperations().create(table, limitVersion);
 	}
 
@@ -220,7 +224,7 @@ public class Accumulo {
 	 * @throws AccumuloSecurityException
 	 * @throws TableNotFoundException
 	 */
-	public void deleteTable(String table) throws AccumuloException, AccumuloSecurityException, TableNotFoundException {
+	public synchronized void deleteTable(String table) throws AccumuloException, AccumuloSecurityException, TableNotFoundException {
 		this.connector.tableOperations().delete(table);
 	}
 
@@ -229,7 +233,7 @@ public class Accumulo {
 	 * @param table table
 	 * @throws MutationsRejectedException
 	 */
-	public void flushBashWriter(String table) throws MutationsRejectedException {
+	public synchronized void flushBashWriter(String table) throws MutationsRejectedException {
 		Logger.debug(Accumulo.class, "Flushing bash writer for table: " + table);
 		if ( this.batchWriters.containsKey(table) )
 			this.batchWriters.get(table).flush();
@@ -240,7 +244,7 @@ public class Accumulo {
 	 * @param table table
 	 * @throws MutationsRejectedException
 	 */
-	public void closeBashWriter(String table) throws MutationsRejectedException {
+	public synchronized void closeBashWriter(String table) throws MutationsRejectedException {
 		Logger.debug(Accumulo.class, "Closing bash writer for table: " + table);
 
 		if ( this.batchWriters.containsKey(table) ) {
@@ -518,7 +522,7 @@ public class Accumulo {
 	public synchronized void addMutation(String table, byte[] rowId, byte[] columnFamily, byte[] columnQualifier, String visibility, long timestamp, byte[] value) throws MutationsRejectedException, TableNotFoundException {
 		if ( !this.batchWriters.containsKey(table) ) {
 			BatchWriterConfig config = new BatchWriterConfig();
-			config.setMaxMemory(10000000L);
+			config.setMaxMemory(Config.getLongProperty("accumulo.batch_writer.max_memory"));
 			this.batchWriters.put(table, this.connector.createBatchWriter(table, config));
 		}
 
@@ -544,7 +548,7 @@ public class Accumulo {
 	public synchronized void addMutation(String table, String rowId, String columnFamily, String columnQualifier, String visibility, long timestamp, Value value) throws MutationsRejectedException, TableNotFoundException {
 		if ( !this.batchWriters.containsKey(table) ) {
 			BatchWriterConfig config = new BatchWriterConfig();
-			config.setMaxMemory(10000000L);
+			config.setMaxMemory(Config.getLongProperty("accumulo.batch_writer.max_memory"));
 			this.batchWriters.put(table, this.connector.createBatchWriter(table, config));
 		}
 
