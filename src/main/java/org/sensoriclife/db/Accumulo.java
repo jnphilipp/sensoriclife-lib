@@ -32,7 +32,7 @@ import org.sensoriclife.Logger;
 
 /**
  *
- * @author jnphilipp
+ * @author jnphilipp, marcel
  * @version 0.2.1
  */
 public class Accumulo {
@@ -557,6 +557,53 @@ public class Accumulo {
 		Mutation mutation = new Mutation(rowId);
 		mutation.put(columnFamily, columnQualifier, colVis, timestamp, value);
 		this.batchWriters.get(table).addMutation(mutation);
+	}
+	
+	/**
+	 * adds a given mutation to a specific table.
+	 * @param table
+	 * @param m
+	 * @throws MutationsRejectedException
+	 * @throws TableNotFoundException
+	 */
+	public synchronized void addMutation(String table, Mutation m) throws MutationsRejectedException, TableNotFoundException{
+		if ( !this.batchWriters.containsKey(table) ) {
+			BatchWriterConfig config = new BatchWriterConfig();
+			config.setMaxMemory(Config.getLongProperty("accumulo.batch_writer.max_memory"));
+			this.batchWriters.put(table, this.connector.createBatchWriter(table, config));
+		}
+		this.batchWriters.get(table).addMutation(m);
+	}
+	
+	/**
+	 * adds a row to a new mutation and returns it.
+	 * @param rowId
+	 * @param columnFamily
+	 * @param columnQualifier
+	 * @param timestamp
+	 * @param value
+	 * @return Mutation
+	 */
+	public synchronized Mutation putToNewMutation(String rowId, String columnFamily, String columnQualifier, long timestamp, Value value){
+		Mutation m = new Mutation(rowId);
+		ColumnVisibility colVis = new ColumnVisibility();
+		m.put(columnFamily, columnQualifier, colVis, timestamp, value);
+		return m;
+	}
+	
+	/**
+	 * adds another row to a given mutation.
+	 * @param m
+	 * @param columnFamily
+	 * @param columnQualifier
+	 * @param timestamp
+	 * @param value
+	 * @return Mutation
+	 */
+	public synchronized Mutation putToMutation(Mutation m, String columnFamily, String columnQualifier, long timestamp, Value value){
+		ColumnVisibility colVis = new ColumnVisibility();
+		m.put(columnFamily, columnQualifier, colVis, timestamp, value);
+		return m;
 	}
 
 	/**
