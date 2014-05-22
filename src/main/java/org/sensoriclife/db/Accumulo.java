@@ -84,8 +84,8 @@ public class Accumulo {
 	 * @return scanner
 	 * @throws TableNotFoundException
 	 */
-	public synchronized Scanner getScannder(String table) throws TableNotFoundException {
-		return this.getScannder(table, Authorizations.EMPTY);
+	public synchronized Scanner getScanner(String table) throws TableNotFoundException {
+		return this.getScanner(table, Authorizations.EMPTY);
 	}
 
 	/**
@@ -95,8 +95,8 @@ public class Accumulo {
 	 * @return scanner
 	 * @throws TableNotFoundException
 	 */
-	public synchronized Scanner getScannder(String table, String visibility) throws TableNotFoundException {
-		return this.getScannder(table, Authorizations.EMPTY);
+	public synchronized Scanner getScanner(String table, String visibility) throws TableNotFoundException {
+		return this.getScanner(table, Authorizations.EMPTY);
 	}
 
 	/**
@@ -106,7 +106,7 @@ public class Accumulo {
 	 * @return scanner
 	 * @throws TableNotFoundException
 	 */
-	public synchronized Scanner getScannder(String table, Authorizations auths) throws TableNotFoundException {
+	public synchronized Scanner getScanner(String table, Authorizations auths) throws TableNotFoundException {
 		return this.connector.createScanner(table, auths);
 	}
 
@@ -116,7 +116,7 @@ public class Accumulo {
 	 * @throws AccumuloSecurityException
 	 */
 	public synchronized void connect() throws AccumuloException, AccumuloSecurityException {
-		this.instance = new MockInstance();
+		this.instance = new MockInstance("mockInstance");
 		this.connector = this.instance.getConnector("",  new PasswordToken(""));
 	}
 
@@ -161,6 +161,18 @@ public class Accumulo {
 	public synchronized void connect(String name, String zooServers, String user, String password) throws AccumuloException, AccumuloSecurityException {
 		this.instance = new ZooKeeperInstance(name, zooServers);
 		this.connector = this.instance.getConnector(user, new PasswordToken(password));
+	}
+	
+	/**
+	 * returns the connector
+	 * @return Connector
+	 */
+	public Connector getConnector() {
+		return connector;
+	}
+	
+	public MockInstance getMockInstance(){
+		return (MockInstance) instance;
 	}
 
 	/**
@@ -248,7 +260,8 @@ public class Accumulo {
 	 * @throws TableNotFoundException
 	 */
 	public synchronized Iterator<Entry<Key,Value>> scanAll(String table) throws TableNotFoundException {
-		return this.scanAll(table, Authorizations.EMPTY);
+		//return this.scanAll(table, Authorizations.EMPTY);
+		return this.scanAll(table, new Authorizations());
 	}
 
 	/**
