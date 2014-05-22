@@ -336,6 +336,47 @@ public class Accumulo {
 	}
 
 	/**
+	 * Returns all elements filter by the given column family.
+	 * @param table table
+	 * @param columnFamily column family
+	 * @return iterator
+	 * @throws TableNotFoundException
+	 */
+	public synchronized Iterator<Entry<Key,Value>> scanByFamily(String table, String columnFamily) throws TableNotFoundException {
+		return this.scanByFamily(table, columnFamily, Authorizations.EMPTY);
+	}
+
+	/**
+	 * Returns all elements filter by the given column family.
+	 * @param table table
+	 * @param columnFamily column family
+	 * @param auths column visibility
+	 * @return iterator
+	 * @throws TableNotFoundException
+	 */
+	public synchronized Iterator<Entry<Key,Value>> scanByFamily(String table, String columnFamily, String auths) throws TableNotFoundException {
+		Authorizations a = new Authorizations(auths);
+		return this.scanByFamily(table, columnFamily, a);
+	}
+
+	/**
+	 * Returns all elements filter by the given column family.
+	 * @param table table
+	 * @param columnFamily column family
+	 * @param auths column visibility
+	 * @return iterator
+	 * @throws TableNotFoundException
+	 */
+	public synchronized Iterator<Entry<Key,Value>> scanByFamily(String table, String columnFamily, Authorizations auths) throws TableNotFoundException {
+		Scanner scanner = this.connector.createScanner(table, auths);
+		scanner.fetchColumnFamily(new Text(columnFamily));
+		Iterator<Entry<Key,Value>> iterator = scanner.iterator();
+		scanner.close();
+
+		return iterator;
+	}
+
+	/**
 	 * Returns all elements filter by the given range for the row ids.
 	 * @param table table
 	 * @param range row id range
@@ -368,9 +409,10 @@ public class Accumulo {
 	 * @throws TableNotFoundException
 	 */
 	public synchronized Iterator<Entry<Key,Value>> scanByKey(String table, Authorizations auths, Range range) throws TableNotFoundException {
-		Scanner scan = this.connector.createScanner(table, auths);
-		scan.setRange(range);
-		Iterator<Entry<Key,Value>> iterator = scan.iterator();
+		Scanner scanner = this.connector.createScanner(table, auths);
+		scanner.setRange(range);
+		Iterator<Entry<Key,Value>> iterator = scanner.iterator();
+		scanner.close();
 
 		return iterator;
 	}
