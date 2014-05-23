@@ -33,7 +33,7 @@ import org.sensoriclife.Logger;
 /**
  *
  * @author jnphilipp, marcel
- * @version 0.2.1
+ * @version 0.3.0
  */
 public class Accumulo {
 	/**
@@ -260,8 +260,7 @@ public class Accumulo {
 	 * @throws TableNotFoundException
 	 */
 	public synchronized Iterator<Entry<Key,Value>> scanAll(String table) throws TableNotFoundException {
-		//return this.scanAll(table, Authorizations.EMPTY);
-		return this.scanAll(table, new Authorizations());
+		return this.scanAll(table, Authorizations.EMPTY);
 	}
 
 	/**
@@ -428,7 +427,7 @@ public class Accumulo {
 	 * @throws TableNotFoundException
 	 */
 	public synchronized void addMutation(String table, byte[] rowId, byte[] columnFamily, byte[] columnQualifier, byte[] value) throws MutationsRejectedException, TableNotFoundException {
-		this.addMutation(table, rowId, columnFamily, columnQualifier, "", System.currentTimeMillis(), value);
+		this.addMutation(table, rowId, columnFamily, columnQualifier, null, System.currentTimeMillis(), value);
 	}
 
 	/**
@@ -442,7 +441,7 @@ public class Accumulo {
 	 * @throws TableNotFoundException
 	 */
 	public synchronized void addMutation(String table, String rowId, String columnFamily, String columnQualifier, byte[] value) throws MutationsRejectedException, TableNotFoundException {
-		this.addMutation(table, rowId, columnFamily, columnQualifier, "", System.currentTimeMillis(), new Value(value));
+		this.addMutation(table, rowId, columnFamily, columnQualifier, null, System.currentTimeMillis(), new Value(value));
 	}
 
 	/**
@@ -456,7 +455,7 @@ public class Accumulo {
 	 * @throws TableNotFoundException
 	 */
 	public synchronized void addMutation(String table, String rowId, String columnFamily, String columnQualifier, Value value) throws MutationsRejectedException, TableNotFoundException {
-		this.addMutation(table, rowId, columnFamily, columnQualifier, "", System.currentTimeMillis(), value);
+		this.addMutation(table, rowId, columnFamily, columnQualifier, null, System.currentTimeMillis(), value);
 	}
 
 	/**
@@ -470,7 +469,7 @@ public class Accumulo {
 	 * @throws MutationsRejectedException
 	 * @throws TableNotFoundException
 	 */
-	public synchronized void addMutation(String table, byte[] rowId, byte[] columnFamily, byte[] columnQualifier, String visibility, byte[] value) throws MutationsRejectedException, TableNotFoundException {
+	public synchronized void addMutation(String table, byte[] rowId, byte[] columnFamily, byte[] columnQualifier, byte[] visibility, byte[] value) throws MutationsRejectedException, TableNotFoundException {
 		this.addMutation(table, rowId, columnFamily, columnQualifier, visibility, System.currentTimeMillis(), value);
 	}
 
@@ -516,7 +515,7 @@ public class Accumulo {
 	 * @throws TableNotFoundException
 	 */
 	public synchronized void addMutation(String table, byte[] rowId, byte[] columnFamily, byte[] columnQualifier, long timestamp, byte[] value) throws MutationsRejectedException, TableNotFoundException {
-		this.addMutation(table, rowId, columnFamily, columnQualifier, "", timestamp, value);
+		this.addMutation(table, rowId, columnFamily, columnQualifier, null, timestamp, value);
 	}
 
 	/**
@@ -546,7 +545,7 @@ public class Accumulo {
 	 * @throws TableNotFoundException
 	 */
 	public synchronized void addMutation(String table, String rowId, String columnFamily, String columnQualifier, long timestamp, Value value) throws MutationsRejectedException, TableNotFoundException {
-		this.addMutation(table, rowId, columnFamily, columnQualifier, "", timestamp, value);
+		this.addMutation(table, rowId, columnFamily, columnQualifier, null, timestamp, value);
 	}
 
 	/**
@@ -561,14 +560,14 @@ public class Accumulo {
 	 * @throws MutationsRejectedException
 	 * @throws TableNotFoundException
 	 */
-	public synchronized void addMutation(String table, byte[] rowId, byte[] columnFamily, byte[] columnQualifier, String visibility, long timestamp, byte[] value) throws MutationsRejectedException, TableNotFoundException {
+	public synchronized void addMutation(String table, byte[] rowId, byte[] columnFamily, byte[] columnQualifier, byte[] visibility, long timestamp, byte[] value) throws MutationsRejectedException, TableNotFoundException {
 		if ( !this.batchWriters.containsKey(table) ) {
 			BatchWriterConfig config = new BatchWriterConfig();
 			config.setMaxMemory(Config.getLongProperty("accumulo.batch_writer.max_memory"));
 			this.batchWriters.put(table, this.connector.createBatchWriter(table, config));
 		}
 
-		ColumnVisibility colVis = new ColumnVisibility(visibility);
+		ColumnVisibility colVis = (visibility == null || visibility.length == 0 ? new ColumnVisibility() : new ColumnVisibility(visibility));
 
 		Mutation mutation = new Mutation(rowId);
 		mutation.put(columnFamily, columnQualifier, colVis, timestamp, value);
@@ -594,7 +593,7 @@ public class Accumulo {
 			this.batchWriters.put(table, this.connector.createBatchWriter(table, config));
 		}
 
-		ColumnVisibility colVis = new ColumnVisibility(visibility);
+		ColumnVisibility colVis = (visibility == null ? new ColumnVisibility() : new ColumnVisibility(visibility));
 
 		Mutation mutation = new Mutation(rowId);
 		mutation.put(columnFamily, columnQualifier, colVis, timestamp, value);
@@ -616,19 +615,168 @@ public class Accumulo {
 		}
 		this.batchWriters.get(table).addMutation(m);
 	}
-	
+
 	/**
-	 * adds a row to a new mutation and returns it.
+	 * Creates a new mutation and returns it.
 	 * @param rowId
 	 * @param columnFamily
 	 * @param columnQualifier
+	 * @param value
+	 * @return Mutation
+	 */
+	public synchronized Mutation newMutation(String rowId, String columnFamily, String columnQualifier, Value value){
+		return this.newMutation(rowId, columnFamily, columnQualifier, null, System.currentTimeMillis(), value);
+	}
+
+	/**
+	 * Creates a new mutation and returns it.
+	 * @param rowId
+	 * @param columnFamily
+	 * @param columnQualifier
+	 * @param value
+	 * @return Mutation
+	 */
+	public synchronized Mutation newMutation(String rowId, String columnFamily, String columnQualifier, byte[] value){
+		return this.newMutation(rowId, columnFamily, columnQualifier, null, System.currentTimeMillis(), value);
+	}
+
+	/**
+	 * Creates a new mutation and returns it.
+	 * @param rowId
+	 * @param columnFamily
+	 * @param columnQualifier
+	 * @param value
+	 * @return Mutation
+	 */
+	public synchronized Mutation newMutation(byte[] rowId, byte[] columnFamily, byte[] columnQualifier, byte[] value){
+		return this.newMutation(rowId, columnFamily, columnQualifier, null, System.currentTimeMillis(), value);
+	}
+
+	/**
+	 * Creates a new mutation and returns it.
+	 * @param rowId
+	 * @param columnFamily
+	 * @param columnQualifier
+	 * @param visibility column visibility
+	 * @param value
+	 * @return Mutation
+	 */
+	public synchronized Mutation newMutation(String rowId, String columnFamily, String columnQualifier, String visibility, Value value){
+		return this.newMutation(rowId, columnFamily, columnQualifier, visibility, System.currentTimeMillis(), value);
+	}
+
+	/**
+	 * Creates a new mutation and returns it.
+	 * @param rowId
+	 * @param columnFamily
+	 * @param columnQualifier
+	 * @param visibility column visibility
+	 * @param value
+	 * @return Mutation
+	 */
+	public synchronized Mutation newMutation(String rowId, String columnFamily, String columnQualifier, String visibility, byte[] value){
+		return this.newMutation(rowId, columnFamily, columnQualifier, visibility, System.currentTimeMillis(), value);
+	}
+
+	/**
+	 * Creates a new mutation and returns it.
+	 * @param rowId
+	 * @param columnFamily
+	 * @param columnQualifier
+	 * @param visibility column visibility
+	 * @param value
+	 * @return Mutation
+	 */
+	public synchronized Mutation newMutation(byte[] rowId, byte[] columnFamily, byte[] columnQualifier, byte[] visibility, byte[] value){
+		return this.newMutation(rowId, columnFamily, columnQualifier, visibility, System.currentTimeMillis(), value);
+	}
+
+	/**
+	 * Creates a new mutation and returns it.
+	 * @param rowId
+	 * @param columnFamily
+	 * @param columnQualifier
+	 * @param timestamp timestamp
+	 * @param value
+	 * @return Mutation
+	 */
+	public synchronized Mutation newMutation(String rowId, String columnFamily, String columnQualifier, long timestamp, Value value){
+		return this.newMutation(rowId, columnFamily, columnQualifier, null, timestamp, value);
+	}
+
+	/**
+	 * Creates a new mutation and returns it.
+	 * @param rowId
+	 * @param columnFamily
+	 * @param columnQualifier
+	 * @param timestamp timestamp
+	 * @param value
+	 * @return Mutation
+	 */
+	public synchronized Mutation newMutation(String rowId, String columnFamily, String columnQualifier, long timestamp, byte[] value){
+		return this.newMutation(rowId, columnFamily, columnQualifier, null, timestamp, value);
+	}
+
+	/**
+	 * Creates a new mutation and returns it.
+	 * @param rowId
+	 * @param columnFamily
+	 * @param columnQualifier
+	 * @param timestamp timestamp
+	 * @param value
+	 * @return Mutation
+	 */
+	public synchronized Mutation newMutation(byte[] rowId, byte[] columnFamily, byte[] columnQualifier, long timestamp, byte[] value){
+		return this.newMutation(rowId, columnFamily, columnQualifier, null, timestamp, value);
+	}
+
+	/**
+	 * Creates a new mutation and returns it.
+	 * @param rowId
+	 * @param columnFamily
+	 * @param columnQualifier
+	 * @param visibility column visibility
 	 * @param timestamp
 	 * @param value
 	 * @return Mutation
 	 */
-	public synchronized Mutation putToNewMutation(String rowId, String columnFamily, String columnQualifier, long timestamp, Value value){
+	public synchronized Mutation newMutation(String rowId, String columnFamily, String columnQualifier, String visibility, long timestamp, Value value){
 		Mutation m = new Mutation(rowId);
-		ColumnVisibility colVis = new ColumnVisibility();
+		ColumnVisibility colVis = (visibility == null ? new ColumnVisibility() : new ColumnVisibility(visibility));
+		m.put(columnFamily, columnQualifier, colVis, timestamp, value);
+		return m;
+	}
+
+	/**
+	 * Creates a new mutation and returns it.
+	 * @param rowId
+	 * @param columnFamily
+	 * @param columnQualifier
+	 * @param visibility column visibility
+	 * @param timestamp
+	 * @param value
+	 * @return Mutation
+	 */
+	public synchronized Mutation newMutation(String rowId, String columnFamily, String columnQualifier, String visibility, long timestamp, byte[] value){
+		Mutation m = new Mutation(rowId);
+		ColumnVisibility colVis = (visibility == null ? new ColumnVisibility() : new ColumnVisibility(visibility));
+		m.put(columnFamily, columnQualifier, colVis, timestamp, new Value(value));
+		return m;
+	}
+
+	/**
+	 * Creates a new mutation and returns it.
+	 * @param rowId
+	 * @param columnFamily
+	 * @param columnQualifier
+	 * @param visibility column visibility
+	 * @param timestamp
+	 * @param value
+	 * @return Mutation
+	 */
+	public synchronized Mutation newMutation(byte[] rowId, byte[] columnFamily, byte[] columnQualifier, byte[] visibility, long timestamp, byte[] value){
+		Mutation m = new Mutation(rowId);
+		ColumnVisibility colVis = (visibility == null || visibility.length == 0 ? new ColumnVisibility() : new ColumnVisibility(visibility));
 		m.put(columnFamily, columnQualifier, colVis, timestamp, value);
 		return m;
 	}

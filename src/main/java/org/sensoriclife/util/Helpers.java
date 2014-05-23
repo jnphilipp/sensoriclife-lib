@@ -25,7 +25,7 @@ import org.apache.commons.lang.ArrayUtils;
 /**
  *
  * @author jnphilipp, paul
- * @version 0.5.0
+ * @version 0.6.0
  */
 public class Helpers {
 	/**
@@ -96,6 +96,26 @@ public class Helpers {
 
 		for ( T t : collection )
 			builder.append(t).append(cement);
+
+		builder.delete(builder.length() - cement.length(), builder.length());
+		return builder.toString();
+	}
+
+	/**
+	 * Repeats the given string the given number of times.
+	 * @param toRepeat text to repeat
+	 * @param number number of times to repeat
+	 * @param cement cement
+	 * @return repeated string
+	 */
+	public static String repeat(String toRepeat, int number, String cement) {
+		StringBuilder builder = new StringBuilder();
+
+		for ( int i = 0; i < number; i++ )
+			if ( cement.isEmpty() )
+				builder.append(toRepeat);
+			else
+				builder.append(toRepeat).append(cement);
 
 		builder.delete(builder.length() - cement.length(), builder.length());
 		return builder.toString();
