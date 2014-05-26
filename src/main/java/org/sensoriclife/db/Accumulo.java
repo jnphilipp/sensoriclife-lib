@@ -116,7 +116,7 @@ public class Accumulo {
 	 * @throws AccumuloSecurityException
 	 */
 	public synchronized void connect() throws AccumuloException, AccumuloSecurityException {
-		this.instance = new MockInstance("mockInstance");
+		this.instance = new MockInstance();
 		this.connector = this.instance.getConnector("",  new PasswordToken(""));
 	}
 
@@ -593,7 +593,7 @@ public class Accumulo {
 			this.batchWriters.put(table, this.connector.createBatchWriter(table, config));
 		}
 
-		ColumnVisibility colVis = (visibility == null ? new ColumnVisibility() : new ColumnVisibility(visibility));
+		ColumnVisibility colVis = (visibility == null || visibility.isEmpty() ? new ColumnVisibility() : new ColumnVisibility(visibility));
 
 		Mutation mutation = new Mutation(rowId);
 		mutation.put(columnFamily, columnQualifier, colVis, timestamp, value);
