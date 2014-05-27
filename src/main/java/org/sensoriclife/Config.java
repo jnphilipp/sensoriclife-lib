@@ -1,5 +1,7 @@
 package org.sensoriclife;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -8,7 +10,7 @@ import java.util.Properties;
 /**
  *
  * @author jnphilipp
- * @version 0.0.2
+ * @version 0.1.0
  */
 public class Config {
 	/**
@@ -25,14 +27,7 @@ public class Config {
 	private Map<String, String> defaults;
 
 	private Config() {
-		try {
-			this.properties = new Properties();
-			this.properties.load(this.getClass().getResourceAsStream("/config.properties"));
-		}
-		catch ( IOException | NullPointerException e ) {
-			Logger.error("Error while loading config file.", e.toString());
-		}
-
+		this.properties = new Properties();
 		this.defaults = new LinkedHashMap<>();
 	}
 
@@ -100,5 +95,16 @@ public class Config {
 	 */
 	public static long getLongProperty(String key) {
 		return Long.parseLong(Config.getProperty(key));
+	}
+
+	public static void load() throws IOException {
+		instance.properties.load(instance.getClass().getResourceAsStream("/config.properties"));
+	}
+
+	public static void load(String file) throws IOException {
+		if ( !new File(file).exists() )
+			Logger.error(Config.class, "The config file does not exists.");
+		else
+			instance.properties.load(new FileInputStream(file));
 	}
 }
