@@ -33,7 +33,7 @@ import org.sensoriclife.Logger;
 /**
  *
  * @author jnphilipp, marcel
- * @version 0.3.0
+ * @version 0.4.0
  */
 public class Accumulo {
 	/**
@@ -85,7 +85,7 @@ public class Accumulo {
 	 * @throws TableNotFoundException
 	 */
 	public synchronized Scanner getScanner(String table) throws TableNotFoundException {
-		return this.getScanner(table, Authorizations.EMPTY);
+		return this.getScanner(table, new Authorizations());
 	}
 
 	/**
@@ -96,7 +96,7 @@ public class Accumulo {
 	 * @throws TableNotFoundException
 	 */
 	public synchronized Scanner getScanner(String table, String visibility) throws TableNotFoundException {
-		return this.getScanner(table, Authorizations.EMPTY);
+		return this.getScanner(table, new Authorizations());
 	}
 
 	/**
@@ -260,7 +260,7 @@ public class Accumulo {
 	 * @throws TableNotFoundException
 	 */
 	public synchronized Iterator<Entry<Key,Value>> scanAll(String table) throws TableNotFoundException {
-		return this.scanAll(table, Authorizations.EMPTY);
+		return this.scanAll(table, new Authorizations());
 	}
 
 	/**
@@ -299,7 +299,7 @@ public class Accumulo {
 	 * @throws TableNotFoundException
 	 */
 	public synchronized Iterator<Entry<Key,Value>> scanColumns(String table, String columnFamily, String columnQualifier) throws TableNotFoundException {
-		return this.scanColumns(table, columnFamily, columnQualifier, Authorizations.EMPTY);
+		return this.scanColumns(table, columnFamily, columnQualifier, new Authorizations());
 	}
 
 	/**
@@ -342,7 +342,7 @@ public class Accumulo {
 	 * @throws TableNotFoundException
 	 */
 	public synchronized Iterator<Entry<Key,Value>> scanByFamily(String table, String columnFamily) throws TableNotFoundException {
-		return this.scanByFamily(table, columnFamily, Authorizations.EMPTY);
+		return this.scanByFamily(table, columnFamily, new Authorizations());
 	}
 
 	/**
@@ -383,7 +383,7 @@ public class Accumulo {
 	 * @throws TableNotFoundException
 	 */
 	public synchronized Iterator<Entry<Key,Value>> scanByKey(String table, Range range) throws TableNotFoundException {
-		return this.scanByKey(table, Authorizations.EMPTY, range);
+		return this.scanByKey(table, new Authorizations(), range);
 	}
 
 	/**
