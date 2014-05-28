@@ -35,23 +35,22 @@ public class AccumuloTest {
 	}
 
 	@Test
-	@Deprecated
 	public void testAccumulo() throws AccumuloException, AccumuloSecurityException, IOException, InterruptedException, MutationsRejectedException, TableExistsException, TableNotFoundException {
 		Accumulo accumulo = Accumulo.getInstance();
 		accumulo.connect();
 		accumulo.createTable("electricity_consumption");
 
 		Value value = new Value("0".getBytes());
-		accumulo.write("electricity_consumption", "1", "electricity", "", value);
+		accumulo.addMutation("electricity_consumption", "1", "electricity", "", value);
 
 		value = new Value("1".getBytes());
-		accumulo.write("electricity_consumption", "2", "electricity", "", value);
+		accumulo.addMutation("electricity_consumption", "2", "electricity", "", value);
 
 		value = new Value("5".getBytes());
-		accumulo.write("electricity_consumption", "3", "electricity", "", value);
+		accumulo.addMutation("electricity_consumption", "3", "electricity", "", value);
 
 		value = new Value("5".getBytes());
-		accumulo.write("electricity_consumption", "4", "electricity", "", value);
+		accumulo.addMutation("electricity_consumption", "4", "electricity", "", value);
 
 		Iterator<Entry<Key, Value>> entries = accumulo.scanByKey("electricity_consumption", "public", new Range("2", "3"));
 		int i = 0;
@@ -66,23 +65,22 @@ public class AccumuloTest {
 	}
 
 	@Test
-	@Deprecated
 	public void testAccumuloVersionLimit() throws AccumuloException, AccumuloSecurityException, IOException, InterruptedException, MutationsRejectedException, TableExistsException, TableNotFoundException {
 		Accumulo accumulo = Accumulo.getInstance();
 		accumulo.connect();
 		accumulo.createTable("electricity_consumption", false);
 
 		Value value = new Value("0".getBytes());
-		accumulo.write("electricity_consumption", "1", "electricity", "", 1, value);
+		accumulo.addMutation("electricity_consumption", "1", "electricity", "", 1, value);
 
 		value = new Value("1".getBytes());
-		accumulo.write("electricity_consumption", "1", "electricity", "", 2, value);
+		accumulo.addMutation("electricity_consumption", "1", "electricity", "", 2, value);
 
 		value = new Value("5".getBytes());
-		accumulo.write("electricity_consumption", "1", "electricity", "", 3, value);
+		accumulo.addMutation("electricity_consumption", "1", "electricity", "", 3, value);
 
 		value = new Value("5".getBytes());
-		accumulo.write("electricity_consumption", "1", "electricity", "", 4, value);
+		accumulo.addMutation("electricity_consumption", "1", "electricity", "", 4, value);
 
 		Iterator<Entry<Key, Value>> entries = accumulo.scanAll("electricity_consumption", "public");
 		int i = 0;
