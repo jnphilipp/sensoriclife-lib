@@ -4,13 +4,15 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 /**
  *
  * @author jnphilipp
- * @version 0.1.0
+ * @version 0.2.0
  */
 public class Config {
 	/**
@@ -49,7 +51,7 @@ public class Config {
 	 * @return the defaults
 	 */
 	public Map<String, String> getDefaults() {
-		return defaults;
+		return this.defaults;
 	}
 
 	/**
@@ -64,10 +66,10 @@ public class Config {
 	 * @return values of the given key
 	 */
 	public static String getProperty(String key) {
-		if ( instance.getDefaults().containsKey(key) )
-			return instance.getDefaults().get(key);
+		if ( instance.properties.containsKey(key) )
+			return instance.properties.getProperty(key, (instance.defaults.containsKey(key) ? instance.defaults.get(key) : ""));
 		else
-			return instance.getProperties().getProperty(key, "");
+			return instance.defaults.get(key);
 	}
 
 	/**
@@ -106,5 +108,19 @@ public class Config {
 			Logger.error(Config.class, "The config file does not exists.");
 		else
 			instance.properties.load(new FileInputStream(file));
+	}
+
+	public static Map<String, String> toMap() {
+		Map<String, String> conf = new LinkedHashMap<>();
+
+		Set<Object> keys = new LinkedHashSet<>(instance.properties.keySet());
+		keys.addAll(instance.defaults.keySet());
+
+		for ( Object obj : keys ) {
+			String key = obj.toString();
+			conf.put(key, instance.properties.getProperty(key, (instance.defaults.containsKey(key) ? instance.defaults.get(key) : "")));
+		}
+
+		return conf;
 	}
 }

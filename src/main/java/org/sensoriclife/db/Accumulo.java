@@ -2,6 +2,7 @@ package org.sensoriclife.db;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -33,9 +34,9 @@ import org.sensoriclife.Logger;
 /**
  *
  * @author jnphilipp, marcel
- * @version 1.0.0
+ * @version 1.0.1
  */
-public class Accumulo {
+public class Accumulo implements Serializable {
 	/**
 	 * instance accumulo
 	 */
@@ -43,7 +44,7 @@ public class Accumulo {
 	/**
 	 * instance
 	 */
-	private Instance instance; 
+	private Instance instance = null; 
 	/**
 	 * connector
 	 */
@@ -51,7 +52,7 @@ public class Accumulo {
 	/**
 	 * mini Accumulo cluster
 	 */
-	private MiniAccumuloCluster accumulo;
+	private MiniAccumuloCluster accumulo = null;
 	/**
 	 * batch writers
 	 */
@@ -116,8 +117,10 @@ public class Accumulo {
 	 * @throws AccumuloSecurityException
 	 */
 	public synchronized void connect() throws AccumuloException, AccumuloSecurityException {
-		this.instance = new MockInstance();
-		this.connector = this.instance.getConnector("",  new PasswordToken(""));
+		if ( this.instance == null ) {
+			this.instance = new MockInstance();
+			this.connector = this.instance.getConnector("",  new PasswordToken(""));
+		}
 	}
 
 	/**
@@ -127,8 +130,10 @@ public class Accumulo {
 	 * @throws AccumuloSecurityException
 	 */
 	public synchronized void connect(String instanceName) throws AccumuloException, AccumuloSecurityException {
-		this.instance = new MockInstance(instanceName);
-		this.connector = this.instance.getConnector("",  new PasswordToken(""));
+		if ( this.instance == null ) {
+			this.instance = new MockInstance(instanceName);
+			this.connector = this.instance.getConnector("",  new PasswordToken(""));
+		}
 	}
 
 	/**
@@ -141,12 +146,14 @@ public class Accumulo {
 	 * @throws InterruptedException
 	 */
 	public synchronized void connect(File tmpDirectory, String rootPassword) throws AccumuloException, AccumuloSecurityException, IOException, InterruptedException {
-		Logger.debug(Accumulo.class, "tmp directory: " + tmpDirectory);
-		this.accumulo = new MiniAccumuloCluster(tmpDirectory, rootPassword);
-		this.accumulo.start();
+		if ( this.accumulo == null ) {
+			Logger.debug(Accumulo.class, "tmp directory: " + tmpDirectory);
+			this.accumulo = new MiniAccumuloCluster(tmpDirectory, rootPassword);
+			this.accumulo.start();
 
-		this.instance = new ZooKeeperInstance(this.accumulo.getInstanceName(), this.accumulo.getZooKeepers());
-		this.connector = this.instance.getConnector("root", new PasswordToken(rootPassword));
+			this.instance = new ZooKeeperInstance(this.accumulo.getInstanceName(), this.accumulo.getZooKeepers());
+			this.connector = this.instance.getConnector("root", new PasswordToken(rootPassword));
+		}
 	}
 
 	/**
@@ -159,8 +166,10 @@ public class Accumulo {
 	 * @throws AccumuloSecurityException
 	 */
 	public synchronized void connect(String name, String zooServers, String user, String password) throws AccumuloException, AccumuloSecurityException {
-		this.instance = new ZooKeeperInstance(name, zooServers);
-		this.connector = this.instance.getConnector(user, new PasswordToken(password));
+		if ( this.instance == null ) {
+			this.instance = new ZooKeeperInstance(name, zooServers);
+			this.connector = this.instance.getConnector(user, new PasswordToken(password));
+		}
 	}
 	
 	/**
@@ -168,11 +177,11 @@ public class Accumulo {
 	 * @return Connector
 	 */
 	public Connector getConnector() {
-		return connector;
+		return this.connector;
 	}
 	
 	public MockInstance getMockInstance(){
-		return (MockInstance) instance;
+		return (MockInstance)this.instance;
 	}
 
 	/**
